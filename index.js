@@ -99,16 +99,16 @@ async function playAudio(fileName) {
 }
 
 function splitTextToParagraphs(text) {
-  return text.split("\n").filter((paragraph) => paragraph.trim().length > 0);
+  return text
+    .split(/[\.!]+/)
+    .filter((paragraph) => paragraph.trim().length > 0);
 }
 
-async function playSelectedChapter(bookMetadata) {
-  const chapterChoices = lodash.reverse(
-    bookMetadata.contents.map((chapter) => ({
-      name: `Chapter: ${chapter.id}`,
-      value: chapter.id,
-    }))
-  );
+async function playSelectedChapter(bookMetadata, lang) {
+  const chapterChoices = bookMetadata.contents.map((chapter) => ({
+    name: `Chapter: ${chapter.id}`,
+    value: chapter.id,
+  }));
 
   const { selectedChapterId } = await inquirer.prompt([
     {
@@ -126,10 +126,10 @@ async function playSelectedChapter(bookMetadata) {
   if (selectedChapter.content.length > 0) {
     console.log(`${selectedChapter.id} is reading...`);
     const paragraphs = splitTextToParagraphs(selectedChapter.content);
-
     for (const [index, paragraph] of paragraphs.entries()) {
       const audioFileName = `temp_voice_${selectedChapter.id}-${index}.mp3`;
-      await convertTextToSpeech(paragraph, audioFileName, "en");
+      console.log(paragraph);
+      await convertTextToSpeech(paragraph, audioFileName, lang);
       await playAudio(audioFileName);
       fs.unlinkSync(audioFileName);
     }
@@ -140,8 +140,8 @@ async function playSelectedChapter(bookMetadata) {
   await runBashCommand("rm -rf temp_voice_*");
   const epubFilePath = path.resolve(
     __dirname,
-    "Spiritual-Evolution-obooko-rel0109.epub"
+    "Franz Kafka - Bir Savaşın Tasviri.epub"
   );
   const bookMetadata = await readEpub(epubFilePath);
-  await playSelectedChapter(bookMetadata);
+  await playSelectedChapter(bookMetadata, "tr");
 })();
